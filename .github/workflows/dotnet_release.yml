@@ -1,0 +1,32 @@
+name: .NET
+
+on:
+  release:
+    types: [published]
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@main
+    - name: Setup .NET
+      uses: actions/setup-dotnet@main
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    - name: Test
+      run: dotnet test --no-build --verbosity normal --configuration Release
+      
+    - name: Pack DependencyProxy
+      run: dotnet pack DependencyProxy --configuration Release
+    - name: Publish DependencyProxy to nuget
+      run: dotnet nuget push DependencyProxy/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_AUTH_TOKEN }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      
+    - name: Pack DependencyProxy.MetadataEngine
+      run: dotnet pack DependencyProxy.MetadataEngine --configuration Release
+    - name: Publish DependencyProxy.MetadataEngine to nuget
+      run: dotnet nuget push DependencyProxy.MetadataEngine/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_AUTH_TOKEN }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      
